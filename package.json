@@ -1,0 +1,22 @@
+{
+  "name": "whatsapp-ai-agent-app",
+  "version": "1.0.0",
+  "description": "TGC WhatsApp AI Customer Care Agent",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "vercel-build": "echo Vercel build complete"
+  },
+  "engines": {
+    "node": "20.x"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.24.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "twilio": "^5.0.0"
+  }
+}
