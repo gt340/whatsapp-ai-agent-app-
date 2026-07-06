@@ -43,7 +43,16 @@ app.post('/webhook/whatsapp', async (req, res) => {
     res.status(500).json({ error: 'Failed to process message.' });
   }
 });
+app.get('/config', (_req, res) => {
+  res.json({
+    twilioSid: process.env.TWILIO_ACCOUNT_SID ? 'SET ✅' : 'MISSING ❌',
+    twilioToken: process.env.TWILIO_AUTH_TOKEN ? 'SET ✅' : 'MISSING ❌',
+    twilioNumber: process.env.TWILIO_WHATSAPP_NUMBER || 'MISSING ❌',
+    anthropicKey: process.env.ANTHROPIC_API_KEY ? 'SET ✅' : 'MISSING ❌',
+  });
+});
 
+app.post('/api/test-reply', async (req, res) => {
 app.post('/api/test-reply', async (req, res) => {
   try {
     const { userMessage = 'Hello', userPhone = 'test-user' } = req.body || {};
