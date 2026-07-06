@@ -53,7 +53,7 @@ app.get('/config', (_req, res) => {
 });
 
 app.post('/api/test-reply', async (req, res) => {
-app.post('/api/test-reply', async (req, res) => {
+
   try {
     const { userMessage = 'Hello', userPhone = 'test-user' } = req.body || {};
     const reply = await getReplyFromAgent({ userPhone, userMessage });
