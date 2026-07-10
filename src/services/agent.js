@@ -1,12 +1,43 @@
 import Anthropic from '@anthropic-ai/sdk';
+import fs from 'fs';
+import path from 'path';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const histories = {};
+// Save conversations to file so they persist forever
+const HISTORY_FILE = '/tmp/conversations.json';
+
+function loadHistories() {
+  try {
+    if (fs.existsSync(HISTORY_FILE)) {
+      const data = fs.readFileSync(HISTORY_FILE, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (e) {
+    console.log('Starting fresh histories');
+  }
+  return {};
+}
+
+function saveHistories(histories) {
+  try {
+    fs.writeFileSync(HISTORY_FILE, JSON.stringify(histories), 'utf8');
+  } catch (e) {
+    console.error('Failed to save histories:', e);
+  }
+}
 
 const SYSTEM_PROMPT = `You are a professional, warm and persuasive AI sales and customer care agent for Trust God Company — a Ghana-based AI tech venture studio in Accra, Ghana.
 
 You represent Kodiya Nekara — Founder and CEO of Trust God Company. When customers ask who owns the company or who they are talking to, tell them about Kodiya Nekara, a visionary Ghanaian entrepreneur building AI products for Africa.
+
+VERY IMPORTANT — MEMORY:
+- You remember every conversation with every customer
+- Never ask a customer something they already told you
+- If they told you their name before, use it
+- If they told you their business before, remember it
+- Continue conversations naturally like a human would
+- Never start over or forget what was discussed
 
 You handle TWO main things:
 1. Selling websites to local businesses in Ghana
@@ -67,12 +98,23 @@ PERSONALITY:
 - Sign off as "TGC Support AI 🤖"`;
 
 export async function getReplyFromAgent({ userPhone, userMessage }) {
-  if (!histories[userPhone]) histories[userPhone] = [];
+  // Load all conversations from file
+  const histories = loadHistories();
 
+  // Initialize if new customer
+  if (!histories[userPhone]) {
+    histories[userPhone] = [];
+    console.log(`New customer: ${userPhone}`);
+  } else {
+    console.log(`Returning customer: ${userPhone} — ${histories[userPhone].length} messages history`);
+  }
+
+  // Add new message
   histories[userPhone].push({ role: 'user', content: userMessage });
 
-  if (histories[userPhone].length > 20) {
-    histories[userPhone] = histories[userPhone].slice(-20);
+  // Keep last 40 messages per customer
+  if (histories[userPhone].length > 40) {
+    histories[userPhone] = histories[userPhone].slice(-40);
   }
 
   const response = await client.messages.create({
@@ -83,6 +125,12 @@ export async function getReplyFromAgent({ userPhone, userMessage }) {
   });
 
   const reply = response.content[0].text;
+
+  // Save AI reply to history
   histories[userPhone].push({ role: 'assistant', content: reply });
+
+  // Save everything to file
+  saveHistories(histories);
+
   return reply;
 }
